@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const exitTime = document.getElementById('exitTime');
 
   // Configurações do GitHub
-  const GITHUB_TOKEN = 'SEU_PERSONAL_ACCESS_TOKEN_AQUI'; // Substitua pelo seu token
+  const GITHUB_TOKEN = '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'; // Substitua pelo seu token
   const REPO_OWNER = 'tiagodeazevedoferreira';
   const REPO_NAME = 'CalculoHorarioSaida';
   const FILE_PATH = 'data.json';
