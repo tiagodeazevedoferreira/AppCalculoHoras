@@ -1,74 +1,34 @@
-// Arquivo: tailwind.config.js
-module.exports = {
-  content: ["./index.html", "./script.js"],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-};
-
-// Arquivo: server.js
-const express = require('express');
-const app = express();
-const port = 3001;
-
-// Middleware para permitir CORS
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  next();
-});
-
-// Middleware para parsear JSON
-app.use(express.json());
-
-// Endpoint fictício para simular dados
-const mockData = {
-  entryTime: '08:00',
-  lunchStart: '12:00',
-  lunchEnd: '13:00'
-};
-
-// Rota para carregar os dados (GET)
-app.get('/load', (req, res) => {
-  res.json(mockData);
-});
-
-// Rota para salvar os dados (POST)
-app.post('/save', (req, res) => {
-  console.log('Dados recebidos:', req.body);
-  res.json({ status: 'Dados salvos com sucesso!' });
-});
-
-// Iniciar o servidor
-app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
-});
-
-// Arquivo: script.js
 document.addEventListener('DOMContentLoaded', () => {
   const entryTime = document.getElementById('entryTime');
   const lunchStart = document.getElementById('lunchStart');
   const lunchEnd = document.getElementById('lunchEnd');
   const exitTime = document.getElementById('exitTime');
 
-  // URL do backend local
-  const BACKEND_URL = 'https://tiagodeazevedoferreira.github.io/AppCalculoHoras/data.json';
+  // Configurações do GitHub
+  const GITHUB_TOKEN = 'SEU_PERSONAL_ACCESS_TOKEN_AQUI'; // Substitua pelo seu token
+  const REPO_OWNER = 'tiagodeazevedoferreira';
+  const REPO_NAME = 'CalculoHorarioSaida';
+  const FILE_PATH = 'data.json';
+  const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
 
-  // Função para carregar os dados da planilha
+  // Função para carregar os dados do GitHub
   async function loadData() {
     try {
-      const response = await fetch(BACKEND_URL, {
-        method: 'GET'
+      const response = await fetch(API_URL, {
+        method: 'GET',
+        headers: {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
       });
       if (!response.ok) {
         throw new Error(`Erro na requisição GET: ${response.status} ${response.statusText}`);
       }
       const data = await response.json();
-      entryTime.value = data.entryTime || '';
-      lunchStart.value = data.lunchStart || '';
-      lunchEnd.value = data.lunchEnd || '';
+      const content = JSON.parse(atob(data.content)); // Decodifica base64
+      entryTime.value = content.entryTime || '';
+      lunchStart.value = content.lunchStart || '';
+      lunchEnd.value = content.lunchEnd || '';
       calculateExitTime();
     } catch (err) {
       console.error('Erro ao carregar dados:', err);
@@ -76,14 +36,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Função para salvar os dados na planilha
+  // Função para salvar os dados no GitHub
   async function saveData() {
     const data = {
       entryTime: entryTime.value,
       lunchStart: lunchStart.value,
       lunchEnd: lunchEnd.value
     };
-    console.log('Novo estado (manual update necessário):', data);
+
+    try {
+      // Obter o SHA atual do arquivo
+      const getResponse = await fetch(API_URL, {
+        method: 'GET',
+        headers: {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      if (!getResponse.ok && getResponse.status !== 404) {
+        throw new Error(`Erro ao obter SHA: ${getResponse.status} ${getResponse.statusText}`);
+      }
+      let sha = null;
+      if (getResponse.ok) {
+        const fileData = await getResponse.json();
+        sha = fileData.sha;
+      }
+
+      // Salvar os dados
+      const response = await fetch(API_URL, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          message: 'Atualizar data.json com novos horários',
+          content: btoa(JSON.stringify(data)), // Codifica em base64
+          sha: sha // Envia o SHA, se existir
+        })
+      });
+      if (!response.ok) {
+        throw new Error(`Erro na requisição PUT: ${response.status} ${response.statusText}`);
+      }
+      console.log('Dados salvos com sucesso:', data);
+    } catch (err) {
+      console.error('Erro ao salvar dados:', err);
+    }
   }
 
   loadData();
@@ -120,16 +119,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const morningWork = lunchStartMin - entryMin;
-    const totalWork = 528;
+    const totalWork = 528; // 8h48min
     const remainingWork = totalWork - morningWork;
     const exitMin = lunchEndMin + remainingWork;
 
     exitTime.textContent = formatTime(exitMin);
   }
 
-  entryTime.addEventListener('input', saveData);
-  lunchStart.addEventListener('input', saveData);
-  lunchEnd.addEventListener('input', saveData);
+  entryTime.addEventListener('input', () => {
+    calculateExitTime();
+    saveData();
+  });
+  lunchStart.addEventListener('input', () => {
+    calculateExitTime();
+    saveData();
+  });
+  lunchEnd.addEventListener('input', () => {
+    calculateExitTime();
+    saveData();
+  });
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')
