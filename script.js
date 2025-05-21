@@ -1,111 +1,84 @@
+```javascript
 document.addEventListener('DOMContentLoaded', () => {
   const entryTime = document.getElementById('entryTime');
   const lunchStart = document.getElementById('lunchStart');
   const lunchEnd = document.getElementById('lunchEnd');
   const exitTime = document.getElementById('exitTime');
 
-  // Configurações do GitHub
-  const GITHUB_TOKEN = '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'; // Substitua pelo seu token
-  const REPO_OWNER = 'tiagodeazevedoferreira';
-  const REPO_NAME = 'CalculoHorarioSaida';
-  const FILE_PATH = 'data.json';
-  const API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+  // Configuração do Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyAbmCGZF1KBVyDNNE73Slcvn5YiWBZ61Do",
+    authDomain: "apphoras-6e79c.firebaseapp.com",
+    databaseURL: "https://apphoras-6e79c-default-rtdb.firebaseio.com",
+    projectId: "apphoras-6e79c",
+    storageBucket: "apphoras-6e79c.firebasestorage.app",
+    messagingSenderId: "1029932334742",
+    appId: "1:1029932334742:web:121173d396edda9625ccb7",
+    measurementId: "G-SSL97JP1NE"
+  };
 
-  // Função para carregar os dados do GitHub
-  async function loadData() {
-    try {
-      const response = await fetch(API_URL, {
-        method: 'GET',
-        headers: {
-          'Authorization': `token ${GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      });
-      if (!response.ok) {
-        throw new Error(`Erro na requisição GET: ${response.status} ${response.statusText}`);
-      }
-      const data = await response.json();
-      const content = JSON.parse(atob(data.content)); // Decodifica base64
-      entryTime.value = content.entryTime || '';
-      lunchStart.value = content.lunchStart || '';
-      lunchEnd.value = content.lunchEnd || '';
+  // Inicializar Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // Função para carregar dados
+  function loadData() {
+    db.ref('horario').once('value').then((snapshot) => {
+      const data = snapshot.val() || { entryTime: '', lunchStart: '', lunchEnd: '' };
+      console.log('Dados carregados do Firebase:', data);
+      entryTime.value = data.entryTime || '';
+      lunchStart.value = data.lunchStart || '';
+      lunchEnd.value = data.lunchEnd || '';
       calculateExitTime();
-    } catch (err) {
+    }).catch((err) => {
       console.error('Erro ao carregar dados:', err);
       calculateExitTime();
-    }
+    });
   }
 
-  // Função para salvar os dados no GitHub
-  async function saveData() {
+  // Função para salvar dados
+  function saveData() {
     const data = {
       entryTime: entryTime.value,
       lunchStart: lunchStart.value,
       lunchEnd: lunchEnd.value
     };
-
-    try {
-      // Obter o SHA atual do arquivo
-      const getResponse = await fetch(API_URL, {
-        method: 'GET',
-        headers: {
-          'Authorization': `token ${GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      });
-      if (!getResponse.ok && getResponse.status !== 404) {
-        throw new Error(`Erro ao obter SHA: ${getResponse.status} ${getResponse.statusText}`);
-      }
-      let sha = null;
-      if (getResponse.ok) {
-        const fileData = await getResponse.json();
-        sha = fileData.sha;
-      }
-
-      // Salvar os dados
-      const response = await fetch(API_URL, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: 'Atualizar data.json com novos horários',
-          content: btoa(JSON.stringify(data)), // Codifica em base64
-          sha: sha // Envia o SHA, se existir
-        })
-      });
-      if (!response.ok) {
-        throw new Error(`Erro na requisição PUT: ${response.status} ${response.statusText}`);
-      }
-      console.log('Dados salvos com sucesso:', data);
-    } catch (err) {
+    console.log('Salvando dados no Firebase:', data);
+    db.ref('horario').set(data).then(() => {
+      console.log('Dados salvos com sucesso');
+    }).catch((err) => {
       console.error('Erro ao salvar dados:', err);
-    }
+    });
   }
 
+  // Carregar dados ao iniciar
   loadData();
 
+  // Função para converter tempo em minutos
   const toMinutes = (time) => {
     if (!time) return 0;
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
   };
 
+  // Função para formatar minutos em HH:MM
   const formatTime = (minutes) => {
     const hrs = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   };
 
+  // Função para calcular o horário de saída
   function calculateExitTime() {
     const entry = entryTime.value;
     const lunchS = lunchStart.value;
     const lunchE = lunchEnd.value;
 
+    console.log('Calculando saída:', { entry, lunchS, lunchE });
+
     if (!entry || !lunchS || !lunchE) {
       exitTime.textContent = '--:--';
+      console.log('Campos incompletos, saída não calculada');
       return;
     }
 
@@ -115,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (lunchStartMin <= entryMin || lunchEndMin <= lunchStartMin) {
       exitTime.textContent = 'Erro';
+      console.log('Erro: Horários inválidos');
       return;
     }
 
@@ -124,8 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const exitMin = lunchEndMin + remainingWork;
 
     exitTime.textContent = formatTime(exitMin);
+    console.log('Saída calculada:', formatTime(exitMin));
   }
 
+  // Listeners para salvar e recalcular ao alterar os campos
   entryTime.addEventListener('input', () => {
     calculateExitTime();
     saveData();
@@ -139,9 +115,11 @@ document.addEventListener('DOMContentLoaded', () => {
     saveData();
   });
 
+  // Registrar o Service Worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')
-      .then(() => console.log('Service Worker Registered'))
-      .catch(err => console.error('Service Worker Error:', err));
+      .then(() => console.log('Service Worker Registrado'))
+      .catch(err => console.error('Erro no Service Worker:', err));
   }
 });
+```
