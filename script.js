@@ -1,4 +1,6 @@
-// Configuração do Firebase
+// Configuração do tempo de alerta (em minutos)
+const ALERT_THRESHOLD = 5; // Altere este valor para o tempo desejado (ex.: 10, 15)
+
 const firebaseConfig = {
   apiKey: "AIzaSyAbmCGZF1KBVyDNNE73Slcvn5YiWBZ61Do",
   authDomain: "apphoras-6e79c.firebaseapp.com",
@@ -36,6 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
           lunchEnd.value = data.lunchEnd || '';
         }
         calculateExitTime();
+        checkNotificationPermission();
+        startNotificationCheck();
       })
       .catch(err => {
         console.error('Erro ao carregar dados:', err);
@@ -56,6 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(() => {
         console.log('Dados salvos com sucesso:', data);
         console.log('Conectividade:', navigator.onLine ? 'Online' : 'Offline');
+        calculateExitTime();
+        startNotificationCheck();
       })
       .catch(err => {
         console.error('Erro ao salvar dados:', err);
@@ -63,8 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  loadData();
-
+  // Função para calcular o horário de saída
   const toMinutes = (time) => {
     if (!time) return 0;
     const [hours, minutes] = time.split(':').map(Number);
@@ -86,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!entry || !lunchS || !lunchE) {
       exitTime.textContent = '--:--';
-      return;
+      return null;
     }
 
     const entryMin = toMinutes(entry);
@@ -95,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (lunchStartMin <= entryMin || lunchEndMin <= lunchStartMin) {
       exitTime.textContent = 'Erro';
-      return;
+      return null;
     }
 
     const morningWork = lunchStartMin - entryMin;
@@ -104,6 +109,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const exitMin = lunchEndMin + remainingWork;
 
     exitTime.textContent = formatTime(exitMin);
+    return exitMin;
+  }
+
+  // Função para verificar permissão de notificação
+  function checkNotificationPermission() {
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        console.log('Permissão de notificação já concedida');
+      } else if (Notification.permission !== 'denied') {
+        Notification.requestPermission().then(permission => {
+          if (permission === 'granted') {
+            console.log('Permissão de notificação concedida');
+          } else {
+            console.log('Permissão de notificação negada');
+          }
+        });
+      }
+    }
+  }
+
+  // Função para verificar e disparar notificação
+  function checkNotification() {
+    const exitMin = calculateExitTime();
+    if (!exitMin) return;
+
+    const now = new Date();
+    const currentMin = now.getHours() * 60 + now.getMinutes();
+    const timeDiff = exitMin - currentMin;
+
+    console.log('Tempo restante até a saída (minutos):', timeDiff);
+
+    if (timeDiff <= ALERT_THRESHOLD && timeDiff >= 0 && Notification.permission === 'granted') {
+      new Notification('Aviso de Saída', {
+        body: `Você está a menos de ${ALERT_THRESHOLD} minutos do horário de saída!`,
+        icon: '/AppCalculoHoras/icon.png'
+      });
+      console.log('Notificação disparada!');
+    }
+  }
+
+  // Iniciar verificação a cada minuto
+  function startNotificationCheck() {
+    checkNotification(); // Verificação imediata
+    setInterval(checkNotification, 60000); // Verifica a cada minuto
   }
 
   entryTime.addEventListener('input', () => {
@@ -127,4 +176,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   console.log('Nova versão da PWA carregada - AppCalculoHoras');
   console.log('Conectividade inicial:', navigator.onLine ? 'Online' : 'Offline');
+  loadData();
 });
