@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(err => {
         console.error('Erro ao salvar dados:', err);
-        console.log('Conectividade:', navigator.onLine ? 'Offline');
+        console.log('Conectividade:', navigator.onLine ? 'Online' : 'Offline'); // Corrigido
       });
   }
 
@@ -209,7 +209,6 @@ document.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('/AppCalculoHoras/sw.js')
       .then(registration => {
         console.log('Service Worker Registered - New Version', registration);
-        // Adicionar listener para mensagens do Service Worker, se necessário
       })
       .catch(err => console.error('Service Worker Error:', err));
   }
