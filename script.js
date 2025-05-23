@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Função para verificar e disparar notificação
+  // Função para verificar e enviar mensagem ao Service Worker
   function checkNotification() {
     console.log('Iniciando checkNotification');
     const exitMin = calculateExitTime();
@@ -165,15 +165,16 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Tempo restante até a saída (minutos):', timeDiff);
 
     if (timeDiff <= ALERT_THRESHOLD && timeDiff >= 0) {
-      if (Notification.permission === 'granted') {
-        console.log('Condições atendidas, disparando notificação...');
-        new Notification('Aviso de Saída', {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        console.log('Enviando mensagem ao Service Worker para notificação...');
+        navigator.serviceWorker.controller.postMessage({
+          type: 'SHOW_NOTIFICATION',
+          title: 'Aviso de Saída',
           body: `Você está a menos de ${ALERT_THRESHOLD} minutos do horário de saída!`,
           icon: '/AppCalculoHoras/icon.png'
         });
-        console.log('Notificação disparada!');
       } else {
-        console.log('Notificação não disparada: permissões insuficientes');
+        console.log('Service Worker não disponível para enviar notificação');
       }
     } else {
       console.log('Notificação não disparada: tempo restante fora do intervalo');
@@ -206,7 +207,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator) {
     console.log('Registrando Service Worker...');
     navigator.serviceWorker.register('/AppCalculoHoras/sw.js')
-      .then(() => console.log('Service Worker Registered - New Version'))
+      .then(registration => {
+        console.log('Service Worker Registered - New Version', registration);
+        // Adicionar listener para mensagens do Service Worker, se necessário
+      })
       .catch(err => console.error('Service Worker Error:', err));
   }
 
