@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(err => {
         console.error('Erro ao salvar dados:', err);
-        console.log('Conectividade:', navigator.onLine ? 'Online' : 'Offline'); // Corrigido
+        console.log('Conectividade:', navigator.onLine ? 'Online' : 'Offline');
       });
   }
 
@@ -165,16 +165,29 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Tempo restante até a saída (minutos):', timeDiff);
 
     if (timeDiff <= ALERT_THRESHOLD && timeDiff >= 0) {
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        console.log('Enviando mensagem ao Service Worker para notificação...');
-        navigator.serviceWorker.controller.postMessage({
-          type: 'SHOW_NOTIFICATION',
-          title: 'Aviso de Saída',
-          body: `Você está a menos de ${ALERT_THRESHOLD} minutos do horário de saída!`,
-          icon: '/AppCalculoHoras/icon.png'
-        });
+      if ('serviceWorker' in navigator) {
+        if (navigator.serviceWorker.controller) {
+          console.log('Enviando mensagem ao Service Worker para notificação...');
+          navigator.serviceWorker.controller.postMessage({
+            type: 'SHOW_NOTIFICATION',
+            title: 'Aviso de Saída',
+            body: `Você está a menos de ${ALERT_THRESHOLD} minutos do horário de saída!`,
+            icon: '/AppCalculoHoras/icon.png'
+          });
+        } else {
+          console.log('Service Worker não controlando a página, aguardando...');
+          navigator.serviceWorker.ready.then(registration => {
+            console.log('Service Worker pronto, enviando notificação...');
+            registration.active.postMessage({
+              type: 'SHOW_NOTIFICATION',
+              title: 'Aviso de Saída',
+              body: `Você está a menos de ${ALERT_THRESHOLD} minutos do horário de saída!`,
+              icon: '/AppCalculoHoras/icon.png'
+            });
+          });
+        }
       } else {
-        console.log('Service Worker não disponível para enviar notificação');
+        console.log('Service Worker não suportado neste contexto');
       }
     } else {
       console.log('Notificação não disparada: tempo restante fora do intervalo');
@@ -209,6 +222,9 @@ document.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('/AppCalculoHoras/sw.js')
       .then(registration => {
         console.log('Service Worker Registered - New Version', registration);
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('Service Worker assumiu o controle');
+        });
       })
       .catch(err => console.error('Service Worker Error:', err));
   }
