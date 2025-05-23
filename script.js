@@ -1,5 +1,4 @@
-// Configuração do tempo de alerta (em minutos)
-const ALERT_THRESHOLD = 5; // Altere este valor para o tempo desejado (ex.: 10, 15)
+const ALERT_THRESHOLD = 5;
 
 const firebaseConfig = {
   apiKey: "AIzaSyAbmCGZF1KBVyDNNE73Slcvn5YiWBZ61Do",
@@ -149,10 +148,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Iniciar verificação a cada minuto
+  // Iniciar verificação a cada 10 segundos (para teste)
   function startNotificationCheck() {
     checkNotification(); // Verificação imediata
-    setInterval(checkNotification, 60000); // Verifica a cada minuto
+    setInterval(checkNotification, 10000); // Verifica a cada 10 segundos
   }
 
   entryTime.addEventListener('input', () => {
