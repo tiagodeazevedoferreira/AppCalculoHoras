@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function startNotificationCheck() {
     console.log('Iniciando startNotificationCheck');
     checkNotification(); // Verificação imediata
-    setInterval(checkNotification, 10000); // Verifica a cada 10 segundos
+    setInterval(checkNotification, 150000); // Verifica a cada 2 minutos e meio
   }
 
   entryTime.addEventListener('input', () => {
