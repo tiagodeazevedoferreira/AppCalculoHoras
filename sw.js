@@ -70,8 +70,10 @@ self.addEventListener('message', event => {
     self.registration.showNotification(event.data.title, {
       body: event.data.body,
       icon: event.data.icon,
-      vibrate: [200, 100, 200] // Opcional: vibração para celular
-    }).catch(err => console.error('Erro ao mostrar notificação:', err));
+      vibrate: [200, 100, 200]
+    })
+      .then(() => console.log('Notificação exibida com sucesso'))
+      .catch(err => console.error('Erro ao mostrar notificação:', err));
   }
 });
 
