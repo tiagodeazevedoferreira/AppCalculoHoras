@@ -1,6 +1,3 @@
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, set } from "firebase/database";
-
 // Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAbmCGZF1KBVyDNNE73Slcvn5YiWBZ61Do",
@@ -14,8 +11,8 @@ const firebaseConfig = {
 };
 
 // Inicializar o Firebase
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
+const app = firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
 document.addEventListener('DOMContentLoaded', () => {
   const entryTime = document.getElementById('entryTime');
@@ -25,19 +22,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Função para carregar os dados do Firebase
   function loadData() {
-    const horariosRef = ref(database, 'horarios');
-    onValue(horariosRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        entryTime.value = data.entryTime || '';
-        lunchStart.value = data.lunchStart || '';
-        lunchEnd.value = data.lunchEnd || '';
-      }
-      calculateExitTime();
-    }, (err) => {
-      console.error('Erro ao carregar dados:', err);
-      calculateExitTime();
-    });
+    const horariosRef = firebase.database().ref('horarios');
+    horariosRef.once('value')
+      .then(snapshot => {
+        const data = snapshot.val();
+        if (data) {
+          entryTime.value = data.entryTime || '';
+          lunchStart.value = data.lunchStart || '';
+          lunchEnd.value = data.lunchEnd || '';
+        }
+        calculateExitTime();
+      })
+      .catch(err => {
+        console.error('Erro ao carregar dados:', err);
+        calculateExitTime();
+      });
   }
 
   // Função para salvar os dados no Firebase
@@ -48,12 +47,12 @@ document.addEventListener('DOMContentLoaded', () => {
       lunchEnd: lunchEnd.value
     };
 
-    const horariosRef = ref(database, 'horarios');
-    set(horariosRef, data)
+    const horariosRef = firebase.database().ref('horarios');
+    horariosRef.set(data)
       .then(() => {
         console.log('Dados salvos com sucesso:', data);
       })
-      .catch((err) => {
+      .catch(err => {
         console.error('Erro ao salvar dados:', err);
       });
   }
@@ -76,6 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const entry = entryTime.value;
     const lunchS = lunchStart.value;
     const lunchE = lunchEnd.value;
+
+    console.log('Entradas:', { entry, lunchS, lunchE }); // Para debug
 
     if (!entry || !lunchS || !lunchE) {
       exitTime.textContent = '--:--';
