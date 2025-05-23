@@ -38,43 +38,43 @@
         return gk_fileData[filename] || "";
         }
         </script><!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Horário de Saída</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="manifest" href="manifest.json">
-  <!-- Ignorando favicon.ico por ora -->
-  <!-- Incluir Tailwind CSS via CDN (para desenvolvimento) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body>
-  <div class="container mx-auto p-4">
-    <h1 class="text-2xl font-bold mb-4">Horário de Saída</h1>
-    <label class="block mb-2">
-      Horário de Entrada
-      <input type="time" id="entryTime" class="border p-2 rounded w-full">
-    </label>
-    <br>
-    <label class="block mb-2">
-      Saída para Almoço
-      <input type="time" id="lunchStart" class="border p-2 rounded w-full">
-    </label>
-    <br>
-    <label class="block mb-2">
-      Volta do Almoço
-      <input type="time" id="lunchEnd" class="border p-2 rounded w-full">
-    </label>
-    <br>
-    <label class="text-lg">
-      Saída: <span id="exitTime" class="font-bold">--:--</span>
-    </label>
-  </div>
+   <html lang="pt-BR">
+   <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Horário de Saída</title>
+     <link rel="stylesheet" href="styles.css">
+     <link rel="manifest" href="manifest.json">
+     <!-- Ignorando favicon.ico por ora -->
+     <!-- Incluir Tailwind CSS via CDN (para desenvolvimento) -->
+     <script src="https://cdn.tailwindcss.com"></script>
+   </head>
+   <body>
+     <div class="container mx-auto p-4">
+       <h1 class="text-2xl font-bold mb-4">Horário de Saída</h1>
+       <label class="block mb-2">
+         Horário de Entrada
+         <input type="time" id="entryTime" class="border p-2 rounded w-full">
+       </label>
+       <br>
+       <label class="block mb-2">
+         Saída para Almoço
+         <input type="time" id="lunchStart" class="border p-2 rounded w-full">
+       </label>
+       <br>
+       <label class="block mb-2">
+         Volta do Almoço
+         <input type="time" id="lunchEnd" class="border p-2 rounded w-full">
+       </label>
+       <br>
+       <label class="text-lg">
+         Saída: <span id="exitTime" class="font-bold">--:--</span>
+       </label>
+     </div>
 
-  <!-- Adicionar o SDK do Firebase via CDN -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js"></script>
-  <script src="script.js"></script>
-</body>
-</html>
+     <!-- Adicionar o SDK do Firebase (versão compatível) via CDN -->
+     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+     <script src="script.js"></script>
+   </body>
+   </html>
