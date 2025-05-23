@@ -1,4 +1,4 @@
-const ALERT_THRESHOLD = 5;
+const ALERT_THRESHOLD = 10; // Alterado de 5 para 10 minutos
 
 const firebaseConfig = {
   apiKey: "AIzaSyAbmCGZF1KBVyDNNE73Slcvn5YiWBZ61Do",
@@ -194,11 +194,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Iniciar verificação a cada 10 segundos (para teste)
+  // Iniciar verificação a cada 3 minutos
   function startNotificationCheck() {
     console.log('Iniciando startNotificationCheck');
     checkNotification(); // Verificação imediata
-    setInterval(checkNotification, 150000); // Verifica a cada 2 minutos e meio
+    setInterval(checkNotification, 180000); // Alterado para 3 minutos (180000 ms)
   }
 
   entryTime.addEventListener('input', () => {
