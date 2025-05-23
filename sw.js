@@ -1,9 +1,9 @@
-const CACHE_NAME = 'horario-saida-cache-v1';
+const CACHE_NAME = 'horario-saida-cache-v2'; // Alterado para v2 para forçar atualização
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/script.js'
+  '/AppCalculoHoras/',
+  '/AppCalculoHoras/index.html',
+  '/AppCalculoHoras/styles.css',
+  '/AppCalculoHoras/script.js'
 ];
 
 self.addEventListener('install', event => {
@@ -13,6 +13,7 @@ self.addEventListener('install', event => {
         console.log('Cache aberto');
         return cache.addAll(urlsToCache);
       })
+      .then(() => self.skipWaiting()) // Força o novo Service Worker a ativar imediatamente
   );
 });
 
@@ -55,10 +56,12 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Limpando cache antigo:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
     })
+    .then(() => self.clients.claim()) // Força os clientes a usar o novo Service Worker
   );
 });

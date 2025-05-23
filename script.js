@@ -55,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
     horariosRef.set(data)
       .then(() => {
         console.log('Dados salvos com sucesso:', data);
-        // Verificar conectividade
         console.log('Conectividade:', navigator.onLine ? 'Online' : 'Offline');
       })
       .catch(err => {
@@ -121,11 +120,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-      .then(() => console.log('Service Worker Registered'))
+    navigator.serviceWorker.register('/AppCalculoHoras/sw.js')
+      .then(() => console.log('Service Worker Registered - New Version'))
       .catch(err => console.error('Service Worker Error:', err));
   }
 
-  // Log de conectividade ao carregar a página
+  console.log('Nova versão da PWA carregada - AppCalculoHoras');
   console.log('Conectividade inicial:', navigator.onLine ? 'Online' : 'Offline');
 });
