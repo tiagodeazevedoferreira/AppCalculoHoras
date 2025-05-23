@@ -20,16 +20,24 @@ firebase.database().goOffline();
 firebase.database().goOnline();
 
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('DOMContentLoaded disparado - Iniciando execução do script');
   const entryTime = document.getElementById('entryTime');
   const lunchStart = document.getElementById('lunchStart');
   const lunchEnd = document.getElementById('lunchEnd');
   const exitTime = document.getElementById('exitTime');
 
+  if (!entryTime || !lunchStart || !lunchEnd || !exitTime) {
+    console.error('Erro: Um ou mais elementos HTML não foram encontrados');
+    return;
+  }
+
   // Função para carregar os dados do Firebase
   function loadData() {
+    console.log('Iniciando loadData');
     const horariosRef = firebase.database().ref('horarios');
     horariosRef.once('value')
       .then(snapshot => {
+        console.log('Dados carregados do Firebase');
         const data = snapshot.val();
         if (data) {
           entryTime.value = data.entryTime || '';
@@ -41,13 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
         startNotificationCheck();
       })
       .catch(err => {
-        console.error('Erro ao carregar dados:', err);
+        console.error('Erro ao carregar dados do Firebase:', err);
         calculateExitTime();
       });
   }
 
   // Função para salvar os dados no Firebase
   function saveData() {
+    console.log('Iniciando saveData');
     const data = {
       entryTime: entryTime.value,
       lunchStart: lunchStart.value,
@@ -64,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(err => {
         console.error('Erro ao salvar dados:', err);
-        console.log('Conectividade:', navigator.onLine ? 'Online' : 'Offline');
+        console.log('Conectividade:', navigator.onLine ? 'Offline');
       });
   }
 
@@ -82,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function calculateExitTime() {
+    console.log('Iniciando calculateExitTime');
     const entry = entryTime.value;
     const lunchS = lunchStart.value;
     const lunchE = lunchEnd.value;
@@ -90,6 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!entry || !lunchS || !lunchE) {
       exitTime.textContent = '--:--';
+      console.log('Horário de saída não calculado: campos vazios');
       return null;
     }
 
@@ -99,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (lunchStartMin <= entryMin || lunchEndMin <= lunchStartMin) {
       exitTime.textContent = 'Erro';
+      console.log('Erro: Horários inválidos');
       return null;
     }
 
@@ -108,15 +120,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const exitMin = lunchEndMin + remainingWork;
 
     exitTime.textContent = formatTime(exitMin);
+    console.log('Horário de saída calculado:', formatTime(exitMin));
     return exitMin;
   }
 
   // Função para verificar permissão de notificação
   function checkNotificationPermission() {
+    console.log('Verificando permissão de notificação');
     if ('Notification' in window) {
       if (Notification.permission === 'granted') {
         console.log('Permissão de notificação já concedida');
       } else if (Notification.permission !== 'denied') {
+        console.log('Solicitando permissão de notificação...');
         Notification.requestPermission().then(permission => {
           if (permission === 'granted') {
             console.log('Permissão de notificação concedida');
@@ -124,50 +139,72 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Permissão de notificação negada');
           }
         });
+      } else {
+        console.log('Permissão de notificação está bloqueada (denied)');
       }
+    } else {
+      console.log('API de Notificação não suportada neste dispositivo');
     }
   }
 
   // Função para verificar e disparar notificação
   function checkNotification() {
+    console.log('Iniciando checkNotification');
     const exitMin = calculateExitTime();
-    if (!exitMin) return;
+    if (!exitMin) {
+      console.log('Horário de saída não calculado, notificação não será disparada');
+      return;
+    }
 
     const now = new Date();
     const currentMin = now.getHours() * 60 + now.getMinutes();
     const timeDiff = exitMin - currentMin;
 
+    console.log('Horário atual (minutos desde 00:00):', currentMin);
+    console.log('Horário de saída (minutos desde 00:00):', exitMin);
     console.log('Tempo restante até a saída (minutos):', timeDiff);
 
-    if (timeDiff <= ALERT_THRESHOLD && timeDiff >= 0 && Notification.permission === 'granted') {
-      new Notification('Aviso de Saída', {
-        body: `Você está a menos de ${ALERT_THRESHOLD} minutos do horário de saída!`,
-        icon: '/AppCalculoHoras/icon.png'
-      });
-      console.log('Notificação disparada!');
+    if (timeDiff <= ALERT_THRESHOLD && timeDiff >= 0) {
+      if (Notification.permission === 'granted') {
+        console.log('Condições atendidas, disparando notificação...');
+        new Notification('Aviso de Saída', {
+          body: `Você está a menos de ${ALERT_THRESHOLD} minutos do horário de saída!`,
+          icon: '/AppCalculoHoras/icon.png'
+        });
+        console.log('Notificação disparada!');
+      } else {
+        console.log('Notificação não disparada: permissões insuficientes');
+      }
+    } else {
+      console.log('Notificação não disparada: tempo restante fora do intervalo');
     }
   }
 
   // Iniciar verificação a cada 10 segundos (para teste)
   function startNotificationCheck() {
+    console.log('Iniciando startNotificationCheck');
     checkNotification(); // Verificação imediata
     setInterval(checkNotification, 10000); // Verifica a cada 10 segundos
   }
 
   entryTime.addEventListener('input', () => {
+    console.log('Evento input detectado em entryTime');
     calculateExitTime();
     saveData();
   });
   lunchStart.addEventListener('input', () => {
+    console.log('Evento input detectado em lunchStart');
     calculateExitTime();
     saveData();
   });
   lunchEnd.addEventListener('input', () => {
+    console.log('Evento input detectado em lunchEnd');
     calculateExitTime();
     saveData();
   });
 
   if ('serviceWorker' in navigator) {
+    console.log('Registrando Service Worker...');
     navigator.serviceWorker.register('/AppCalculoHoras/sw.js')
       .then(() => console.log('Service Worker Registered - New Version'))
       .catch(err => console.error('Service Worker Error:', err));
