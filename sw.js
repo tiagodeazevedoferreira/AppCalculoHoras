@@ -3,7 +3,8 @@ const urlsToCache = [
   '/AppCalculoHoras/',
   '/AppCalculoHoras/index.html',
   '/AppCalculoHoras/styles.css',
-  '/AppCalculoHoras/script.js'
+  '/AppCalculoHoras/script.js',
+  '/AppCalculoHoras/icon.png' // Adicionado para evitar erros de fetch
 ];
 
 self.addEventListener('install', event => {
@@ -33,7 +34,7 @@ self.addEventListener('fetch', event => {
           return response;
         }
         return fetch(event.request).then(networkResponse => {
-          if (!networkResponse || networkResponse.status !== 200 || responseType !== 'basic') {
+          if (!networkResponse || networkResponse.status !== 200) {
             return networkResponse;
           }
           const responseToCache = networkResponse.clone();
@@ -42,6 +43,9 @@ self.addEventListener('fetch', event => {
               cache.put(event.request, responseToCache);
             });
           return networkResponse;
+        }).catch(() => {
+          console.log('Erro de rede ao buscar:', event.request.url);
+          return caches.match('/AppCalculoHoras/index.html'); // Fallback
         });
       })
   );
@@ -69,7 +73,7 @@ self.addEventListener('message', event => {
   if (event.data.type === 'SHOW_NOTIFICATION') {
     self.registration.showNotification(event.data.title, {
       body: event.data.body,
-      icon: event.data.icon,
+      icon: event.data.icon || '/AppCalculoHoras/icon.png',
       vibrate: [200, 100, 200]
     })
       .then(() => console.log('Notificação exibida com sucesso'))
